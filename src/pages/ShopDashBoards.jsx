@@ -1,127 +1,155 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Card, Typography, List, Avatar } from "antd";
-import {
-  ShopOutlined,
-  HomeOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  BellOutlined,
-} from "@ant-design/icons";
-import "../css/ShopDashboard.css";
+import React, { useEffect, useState } from "react";
+import { Card, Typography, Row, Col, List } from "antd";
+import { HomeOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
 import { getUserInfo } from "../api/account";
 import { BASE_URL_IMAGE } from "../api/configs";
 
 const { Title, Text } = Typography;
 
 const notifications = [
-  { id: 1, type: "order", message: "📦 Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
-  { id: 2, type: "comment", message: "💬 Bình luận mới từ Trần Thị B", time: "30 phút trước" },
-  { id: 3, type: "order", message: "📦 Đơn hàng mới từ Lê Văn C", time: "1 giờ trước" },
-  { id: 4, type: "review", message: "⭐ Đánh giá mới từ Mai Thị D", time: "2 giờ trước" },
-  { id: 5, type: "review", message: "⭐ Đánh giá mới từ Văn Thị D", time: "4 giờ trước" },
-  { id: 6, type: "review", message: "⭐ Đánh giá mới từ Nguyễn Văn E", time: "7 giờ trước" },
+  { id: 1, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 2, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 3, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 4, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 5, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 6, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 7, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 8, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 9, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 10, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 11, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
+  { id: 12, message: "\u{1F4E6} Đơn hàng mới từ Nguyễn Văn A", time: "10 phút trước" },
 ];
 
 const ShopDashboard = () => {
-  const notificationRef = useRef(null);
   const [userInfo, setUserInfo] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getUserInfo();
-        console.log("Thông tin tài khoản:", data);
         setUserInfo(data);
       } catch (error) {
         console.error("Lỗi khi lấy thông tin:", error);
       }
     };
-
     fetchData();
   }, []);
 
-  useEffect(() => {
-    const notificationBox = notificationRef.current;
-    let scrollTimeout;
-
-    const handleScroll = () => {
-      notificationBox.classList.add("scrolling");
-
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        notificationBox.classList.remove("scrolling");
-      }, 1000); // 1 giây sau khi dừng cuộn thì ẩn thanh cuộn
-    };
-
-    if (notificationBox) {
-      notificationBox.addEventListener("scroll", handleScroll);
-    }
-
-    return () => {
-      if (notificationBox) {
-        notificationBox.removeEventListener("scroll", handleScroll);
-      }
-    };
-  }, []);
-
   return (
-    <div className="dashboard-container">
-      {/* Layout chính: Chia 2 cột */}
-      <div className="dashboard-grid">
-        {/* Thông tin cửa hàng */}
-        <Card className="shop-info">
-          {userInfo ? (
-            <>
-             <img
-              src={userInfo.image ? `${BASE_URL_IMAGE}${userInfo.image}` : "/default-avatar.png"}
-              alt="Shop"
-              className="shop-image"
-              
+    <div style={{ padding: 24, background: "#f5f7fa", minHeight: "100vh" }}>
+      <Row gutter={24}>
+        {/* LEFT SIDE - Store Info */}
+        <Col xs={24} md={14}>
+          <Card
+            style={{ borderRadius: 16, padding: 0, overflow: "hidden" }}
+            bodyStyle={{ padding: 0 }}
+          >
+            <img
+              src={userInfo?.image ? `${BASE_URL_IMAGE}${userInfo.image}` : "/default-banner.jpg"}
+              alt="Shop Banner"
+              style={{ width: "100%", height: "auto", maxHeight: 300, objectFit: "cover" }}
             />
+            <div style={{ padding: 24 }}>
+              <Title level={2} style={{ fontWeight: 800, marginBottom: 16 }}>
+                Hương vị <span style={{ color: "#B51F1F" }}>món ăn</span> đích thực
+              </Title>
+              <Text style={{ display: "block", marginBottom: 16 }}>
+                Thưởng thức những món ăn truyền thống và hiện đại tuyệt vời nhất
+              </Text>
+              <Row gutter={16}>
+                {[{
+                  icon: <HomeOutlined style={{ fontSize: 24, color: "#333" }} />,
+                  title: "Địa Chỉ",
+                  content: userInfo?.address
+                }, {
+                  icon: <MailOutlined style={{ fontSize: 24, color: "#333" }} />,
+                  title: "Email",
+                  content: userInfo?.email
+                }, {
+                  icon: <PhoneOutlined style={{ fontSize: 24, color: "#333" }} />,
+                  title: "Số Điện Thoại",
+                  content: userInfo?.phone
+                }].map((item, index) => (
+                  <Col span={8} key={index}>
+                    <div
+                      style={{
+                        height: 180,
+                        borderRadius: 12,
+                        flexDirection: "column",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        textAlign: "center",
+                        display: "flex",
+                        padding: 16,
+                        background: "#FAFAFA",
+                        border: "1px solidrgb(38, 38, 38)",
+                      }}
+                    >
+                      {item.icon}
+                      <div>
+                        <Title level={5} style={{ marginTop: 8, marginBottom: 4 }}>{item.title}</Title>
+                        <Text>{item.content}</Text>
+                      </div>
+                    </div>
+                  </Col>
+                ))}
+              </Row>
+             
+            </div>
+          </Card>
+        </Col>
 
-              <div className="shop-details">
-                <Title level={3} className="shop-title">
-                  <ShopOutlined className="icon" /> {userInfo.username}
-                </Title>
-                <Text className="shop-text">
-                  <HomeOutlined className="icon text-blue" /> {userInfo.address}
-                </Text>
-                <Text className="shop-text">
-                  <MailOutlined className="icon text-red" /> {userInfo.email}
-                </Text>
-                <Text className="shop-text">
-                  <PhoneOutlined className="icon text-green" /> {userInfo.phone}
-                </Text>
-              </div>
-            </>
-          ) : (
-            <Text>Đang tải dữ liệu...</Text>
-          )}
-        </Card>
+        {/* RIGHT SIDE - Notifications */}
+        <Col xs={24} md={10}>
+          <Card style={{ borderRadius: 16, height: "80%", display: "flex", flexDirection: "column" }}>
+            <Title level={4} style={{ marginBottom: 24 }}>Thông Báo</Title>
 
-        {/* Danh sách thông báo */}
-        <Card className="notifications" ref={notificationRef}>
-          <Title level={3} className="notification-title">
-            <BellOutlined className="icon" /> Thông Báo
-          </Title>
-          <List
-            dataSource={notifications}
-            renderItem={(item) => (
-              <List.Item className="notification-item">
-                <List.Item.Meta
-                  avatar={
-                    <Avatar className="notification-avatar">
-                      {item.message.charAt(0)}
-                    </Avatar>
+            <div
+              style={{
+                maxHeight: 400,
+                overflowY: "auto",
+                paddingRight: 8,
+                flex: 1,
+              }}
+            >
+              <style>
+                {`
+                  /* Ẩn scrollbar */
+                  ::-webkit-scrollbar {
+                    width: 0;
                   }
-                  title={<Text className="notification-message">{item.message}</Text>}
-                  description={<Text className="notification-time">{item.time}</Text>}
-                />
-              </List.Item>
-            )}
-          />
-        </Card>
-      </div>
+                  ::-webkit-scrollbar-thumb {
+                  }
+                `}
+              </style>
+
+              <List
+                itemLayout="horizontal"
+                dataSource={notifications}
+                renderItem={(item) => (
+                  <List.Item style={{
+                    borderRadius: 12,
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.05)",
+                    marginBottom: 16,
+                    padding: 12,
+                    background: "#FAFAFA",
+                    border: "1px solidrgb(38, 38, 38)",
+
+                  }}>
+                    <List.Item.Meta
+                      title={<Text strong>{item.message}</Text>}
+                      description={<Text type="secondary">{item.time}</Text>}
+                    />
+                  </List.Item>
+                )}
+              />
+            </div>
+          </Card>
+        </Col>
+
+
+      </Row>
     </div>
   );
 };

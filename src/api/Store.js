@@ -5,7 +5,7 @@ const getStores = async (page = 0, size = 20) => {
     const response = await requestWithAuth("GET", `/store/list?page=${page}&size=${size}`);
     return response;
   } catch (error) {
-    console.error("❌ Lỗi khi lấy danh sách cửa hàng:", error);
+    console.error("Lỗi khi lấy danh sách cửa hàng:", error);
     throw error;
   }
 };
@@ -14,10 +14,9 @@ const getStores = async (page = 0, size = 20) => {
 const searchStores = async (keyword) => {
   try {
     const response = await requestWithAuth("GET", `/store/search?search=${encodeURIComponent(keyword)}`);
-    console.log("🔍 Kết quả từ API search store:", response);
     return response;
   } catch (error) {
-    console.error("❌ Lỗi khi tìm kiếm cửa hàng:", error);
+    console.error("Lỗi khi tìm kiếm cửa hàng:", error);
     throw error;
   }
 };

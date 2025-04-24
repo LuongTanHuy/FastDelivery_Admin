@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Table, Tag, Image, Input, Space, Select, message } from "antd";
 import "../css/Order.css";
 import { getOrderItemsByStatus } from "../api/Order";
@@ -13,11 +13,7 @@ function Orders() {
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
-  useEffect(() => {
-    fetchOrders();
-  }, [statusFilter]);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const status = statusFilter === "Đã Thanh Toán" ? 1
                    : statusFilter === "Chưa Thanh Toán" ? 0
@@ -31,9 +27,7 @@ function Orders() {
         const order = item.orderDTO || {};
         const account = order.accountDTO || {};
         const product = item.productDTO || {};
-        console.log(`Đơn hàng #${index} - orderDTO:`, order);
 
-      
         return {
           id: index,
           customer: account.username || "N/A",
@@ -41,7 +35,7 @@ function Orders() {
           phone: account.phone || "N/A",
           product: product.name || "Sản phẩm",
           quantity: item.quantity,
-          price: `${item.price.toLocaleString()} đ`,
+          price: item.price,
           createdAt: order.createdAt?.slice(0, 10),
           image: product.image ? `${BASE_URL_IMAGE}${product.image}` : "",
           shipper: order.shipperName || "Không có",
@@ -51,7 +45,6 @@ function Orders() {
           status: convertStatus(order.status),
         };
       });
-      
 
       setOrders(mapped);
       setFilteredOrders(mapped);
@@ -59,7 +52,11 @@ function Orders() {
       console.error("Lỗi tải đơn hàng:", err);
       message.error("Không thể tải danh sách đơn hàng!");
     }
-  };
+  }, [statusFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   const convertStatus = (statusCode) => {
     switch (Number(statusCode)) {
@@ -101,6 +98,9 @@ function Orders() {
     }
   };
 
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("vi-VN").format(value * 1000) + " VND";
+
   const columns = [
     {
       title: "Thông Tin Người Mua",
@@ -128,7 +128,7 @@ function Orders() {
             <br />
             Số lượng: {record.quantity}
             <br />
-            Giá: {record.price}
+            Giá: {formatCurrency(record.price)}
             <br />
             Ngày tạo: {record.createdAt}
           </div>

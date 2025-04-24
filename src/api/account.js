@@ -69,19 +69,16 @@ const refreshAccessToken = async () => {
 const requestWithAuth = async (method, url, data = null) => {
   try {
     let accessToken = getAccessToken();
-    console.log("Token được gửi đi:", accessToken); // Thêm log để kiểm tra
     const headers = { Authorization: `${accessToken}` };
 
     const response = await API.request({ method, url, data, headers });
     return response.data;
   } catch (error) {
     if (error.response?.status === 401) {
-      console.log("Access token hết hạn, đang làm mới...");
       const newAccessToken = await refreshAccessToken();
       if (newAccessToken) {
         return requestWithAuth(method, url, data);
       } else {
-        console.log("Phiên làm việc hết hạn, đăng xuất...");
         localStorage.clear();
         throw new Error("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
       }
@@ -94,7 +91,6 @@ const requestWithAuth = async (method, url, data = null) => {
 // Tự động làm mới token mỗi 15 phút
 const startTokenRefreshInterval = () => {
   setInterval(async () => {
-    console.log("Làm mới access token...");
     await refreshAccessToken();
   }, 15 * 60 * 1000);
 };

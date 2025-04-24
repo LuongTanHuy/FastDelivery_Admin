@@ -11,7 +11,7 @@ import { PlusOutlined,
 import { BASE_URL_IMAGE } from "../api/configs";
 import { requestWithAuth } from "../api/token";
 import { getProducts, addProduct, updateProduct, changeProductStatus } from "../api/product";
-import { addCategory, getCategories, toggleCategoryStatus } from "../api/category"; 
+import { addCategory, getCategories, toggleCategoryStatus, updateCategory } from "../api/category"; 
 const { Option } = Select;
 const { Search } = Input;
 
@@ -42,7 +42,7 @@ const Food = () => {
       setLoading(true);
       const response = await getProducts();
       setProducts(response);
-  
+      console.log("sp trả về", response);
       const categoryList = [
         ...new Map(
           response.map((item) => [
@@ -50,21 +50,28 @@ const Food = () => {
             {
               id: item.categoryModel?.id,
               name: item.categoryModel?.category,
-              sale: item.categoryModel?.sale,
+              sale: item.categoryModel?.sale ?? 0,
             },
           ])
         ).values(),
       ];
       setCategories(categoryList);
-  
-      const filtered = response.map((item) => ({
+
+      const filtered = response
+      .map((item) => ({
         ...item,
-        idCategory: item.categoryModel?.id, 
-      })).filter((item) =>
+        idCategory: item.categoryModel?.id,
+        category: item.categoryModel?.category || "Không rõ",
+        sale: item.categoryModel?.sale ?? 0, // ✅ chính xác ở đây
+        sold: item.totalProductSold ?? 0,
+        revenue: item.totalRevenue ?? 0,
+      }))
+      .filter((item) =>
         item.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        (item.categoryModel?.category?.toLowerCase() || "").includes(searchText.toLowerCase())
+        item.category.toLowerCase().includes(searchText.toLowerCase())
       );
-  
+    
+        console.log("✅ filteredData sau xử lý:", filtered);
       setFilteredData(filtered);
     } catch (error) {
       message.error("Không thể tải dữ liệu sản phẩm");
@@ -72,6 +79,7 @@ const Food = () => {
       setLoading(false);
     }
   };
+
   
   const fetchCategories = async () => {
     try {
@@ -233,10 +241,11 @@ const Food = () => {
   
   // edit danh muc
   const handleEditCategory = (category) => {
+    console.log("🛠️ Chỉnh sửa danh mục:", category);
     setEditingCategory(category);
     categoryForm.setFieldsValue({
       name: category.name,
-      discount: category.discount,
+      discount: category.sale, // dùng 'sale' thay vì 'discount' nếu data là từ backend
     });
     setIsEditCategoryModalVisible(true);
   };
@@ -299,19 +308,38 @@ const Food = () => {
   }
 
   // lưu danh mục
-  // const handleSaveCategory = () => {
-  //   categoryForm.validateFields().then((values) => {
-  //     console.log("Cập nhật danh mục:", { ...editingCategory, ...values });
-  //     setIsEditCategoryModalVisible(false);
-  //   });
-  // };
+  const handleSaveCategory = async () => {
+    try {
+      const values = await categoryForm.validateFields();
   
+      if (!editingCategory?.id) {
+        message.error("Không tìm thấy danh mục cần cập nhật!");
+        return;
+      }
+  
+      await updateCategory(editingCategory.id, values.name, values.discount);
+  
+      message.success("✅ Cập nhật danh mục thành công!");
+      setIsEditCategoryModalVisible(false);
+      await fetchCategories(); // reload danh sách danh mục
+    } catch (error) {
+      console.error("❌ Lỗi khi cập nhật danh mục:", error);
+      message.error("❌ Cập nhật danh mục thất bại!");
+    }
+  };
+  
+
+  
+  
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("vi-VN").format(value * 1000) + " VND";
+
   const columns = [
     {
       title: "Hình ảnh",
       dataIndex: "image",
       key: "image",
-      render: (src) => <Image width={150} src={src} alt="product" />, // Hiển thị ảnh
+      render: (src) => <Image width={150} src={src} alt="product" />,
     },
     {
       title: "Thông tin",
@@ -319,10 +347,10 @@ const Food = () => {
       key: "info",
       render: (_, record) => (
         <div>
-          <p><b>Danh Mục:</b> {record.category}</p>
+          <p><b>Danh Mục:</b> {record.category || "Không rõ"}</p>
           <p><b>Tên Món:</b> {record.name}</p>
-          <p><b>Giá gốc:</b> {record.price}</p>
-          <p><b>Giảm Giá:</b> {record.discount}</p>
+          <p><b>Giá gốc:</b> {formatCurrency(record.price)}</p>
+          <p><b>Giảm Giá:</b> {record.sale > 0 ? `${record.sale}%` : "Không"}</p>
         </div>
       ),
     },
@@ -337,6 +365,7 @@ const Food = () => {
       dataIndex: "revenue",
       key: "revenue",
       align: "center",
+      render: (value) => <span>{formatCurrency(value)}</span>,
     },
     {
       title: "Xem bình luận",
@@ -347,16 +376,14 @@ const Food = () => {
           type="primary"
           icon={<MessageOutlined />}
           onClick={() => {
-            setCommentsOpen(true);  // Mở modal
-            // setSelectedFood(record); // Lưu sản phẩm đang chọn
-            // fetchComments(record.id); // Gọi API lấy bình luận của sản phẩm
+            setCommentsOpen(true);
+            setSelectedFood(record);
           }}
         >
           View
         </Button>
       ),
     },
-    
     {
       title: "Tuỳ chỉnh",
       key: "actions",
@@ -375,11 +402,9 @@ const Food = () => {
           />
         </div>
       ),
-    }
-    
-    
+    },
   ];
-  
+
   return (
     <div>
       <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalVisible(true)}>
@@ -399,18 +424,18 @@ const Food = () => {
       <Table
         columns={columns}
         style={{ marginTop: 25 }}
-        dataSource={filteredData.map((item, index) => ({
-          // key: item.id, // Dùng item.id thay vì index
-          id: item.id,  // Thêm id để có thể lấy khi chỉnh sửa
-          image: BASE_URL_IMAGE + item.image, 
-          category: item.categoryModel?.category || "Không xác định", 
-          name: item.name, 
+        dataSource={filteredData.map((item) => ({
+          id: item.id,
+          image: BASE_URL_IMAGE + item.image,
+          category: item.category,
+          name: item.name,
           price: item.price,
-          discount: item.discount,
-          sold: item.totalProductSold ?? 0,
-          revenue: item.totalRevenue ?? "0.0 VNĐ",
+          sale: item.sale, 
+          sold: item.sold,
+          revenue: item.revenue,
           status: item.status,
-        }))} 
+        }))}
+        
         loading={loading}
         pagination={{ pageSize: 4 }}
       />
@@ -599,7 +624,7 @@ const Food = () => {
       </Modal>
 
        {/* Modal Chỉnh Sửa Danh Mục */}
-       {/* <Modal
+       <Modal
         title="Chỉnh sửa danh mục"
         open={isEditCategoryModalVisible}
         onCancel={() => setIsEditCategoryModalVisible(false)}
@@ -627,7 +652,7 @@ const Food = () => {
           <InputNumber min={0} max={100} style={{ width: "100%" }} />
           </Form.Item>
         </Form>
-      </Modal> */}
+      </Modal>
 
       {/* modal bình luận */}
       <Modal

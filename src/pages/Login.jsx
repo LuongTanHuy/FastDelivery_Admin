@@ -5,13 +5,12 @@ import { IoMail, IoEye, IoEyeOff } from "react-icons/io5";
 import { FiLock } from "react-icons/fi";
 import logo from "../assets/icons/logoApp.png";
 
-
-
 const Login = () => {
   const [isPasswordShown, setIsPasswordShown] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   const slogans = [
@@ -26,33 +25,39 @@ const Login = () => {
   ];
   const randomSlogan = slogans[Math.floor(Math.random() * slogans.length)];
 
-  const showAlert = (message) => alert(message);
-
   const validateEmail = () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
   const validatePassword = () => password.length >= 8;
 
   const handleLogin = async () => {
     if (!validateEmail() || !validatePassword()) {
-      showAlert("Vui lòng nhập đúng thông tin!");
+      setErrorMessage("Vui lòng nhập đúng thông tin!");
       return;
     }
     try {
       setLoading(true);
+      setErrorMessage("");
       const result = await login(email, password);
       if (result?.accessToken) {
         const userInfo = await getUserInfo();
+        localStorage.setItem("userInfo", JSON.stringify(userInfo)); // ✅ Save to localStorage
+
         if (userInfo.role?.includes("admin")) navigate("/dashboards");
         else if (userInfo.role?.includes("store")) navigate("/shopdashboards");
-        else showAlert("Không xác định vai trò người dùng!");
+        else setErrorMessage("Không xác định vai trò người dùng!");
       } else {
-        showAlert(result?.error || "Sai tài khoản hoặc mật khẩu hoặc đã bị khóa");
+        setErrorMessage("Sai tài khoản hoặc mật khẩu hoặc đã bị khóa");
       }
     } catch (error) {
-      showAlert("Lỗi hệ thống! Vui lòng thử lại sau.");
+      setErrorMessage("Lỗi hệ thống! Vui lòng thử lại sau.");
       console.error("Lỗi login:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleLogin();
     }
   };
 
@@ -79,6 +84,7 @@ const Login = () => {
               placeholder="Nhập email của bạn!"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={handleKeyDown}
               style={styles.textInput}
             />
           </div>
@@ -93,6 +99,7 @@ const Login = () => {
               placeholder="Nhập mật khẩu!"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
               style={styles.textInput}
             />
             <button
@@ -103,6 +110,8 @@ const Login = () => {
             </button>
           </div>
         </div>
+
+        {errorMessage && <div style={styles.errorText}>{errorMessage}</div>}
 
         <button onClick={handleLogin} style={styles.buttonSubmit} disabled={loading}>
           {loading ? "Đang tải..." : "Tiếp tục"}
@@ -172,7 +181,7 @@ const styles = {
   },
   textTitleInput: {
     color: "#555",
-    fontSize: "14px",
+    fontSize: "16px",
     marginBottom: "6px",
     display: "block",
     textAlign: "left",
@@ -187,7 +196,7 @@ const styles = {
     alignItems: "center",
     border: "1px solid #ccc",
     borderRadius: "8px",
-    padding: "10px",
+    padding: "14px",
     backgroundColor: "#fff",
     position: "relative",
   },
@@ -198,6 +207,8 @@ const styles = {
     fontSize: "16px",
     color: "#333",
     paddingLeft: "35px",
+    height: "23px",
+    alignItems: "center",
   },
   inputIcon: {
     position: "absolute",
@@ -225,6 +236,13 @@ const styles = {
     cursor: "pointer",
     width: "100%",
   },
+  errorText: {
+    color: "red",
+    fontSize: "14px",
+    marginTop: "-8px",
+    marginBottom: "12px",
+    textAlign: "center",
+  }
 };
 
 const styleSheet = document.styleSheets[0];

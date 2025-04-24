@@ -49,7 +49,7 @@ const StoreList = () => {
 
   const handleSearch = async (value) => {
     const keyword = value.trim();
-    setSearchText(value); // ✅ Cập nhật input
+    setSearchText(value); 
     if (!keyword) {
       setFilteredStores(stores);
     } else {
