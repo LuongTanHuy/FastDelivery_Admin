@@ -5,10 +5,14 @@ const saveTokens = (accessToken, refreshToken) => {
   localStorage.setItem("accessToken", accessToken);
   localStorage.setItem("refreshToken", refreshToken);
 };
+const saveIdStore = (idStore) => {
+  localStorage.setItem("idStore", idStore);
+};
 
 // Lấy tokens từ localStorage
 const getAccessToken = () => localStorage.getItem("accessToken");
 const getRefreshToken = () => localStorage.getItem("refreshToken");
+const getIdStore = () => localStorage.getItem("idStore");
 
 // Làm mới token
 const refreshAccessToken = async () => {
@@ -78,4 +82,4 @@ const startTokenRefreshInterval = () => {
   }, 15 * 60 * 1000);
 };
 
-export { saveTokens, getAccessToken, getRefreshToken, refreshAccessToken, requestWithAuth, startTokenRefreshInterval };
+export { getIdStore,saveIdStore, saveTokens, getAccessToken, getRefreshToken, refreshAccessToken, requestWithAuth, startTokenRefreshInterval };

@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, Tag, Image, Input, Space, Select, message } from "antd";
+import Button from "antd/lib/button";
 import "../css/Order.css";
-import { getOrderItemsByStatus } from "../api/Order";
+import { getOrderItemsByStatus, updateStatusOrder } from "../api/Order";
 import { BASE_URL_IMAGE } from "../api/configs";
+// import { connectWebSocket } from "../api/chatClient";
 
 const { Search } = Input;
 const { Option } = Select;
@@ -12,37 +14,66 @@ function Orders() {
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const isPaidOrShipping = ["Đã Thanh Toán", "Đang Giao", "Đã Hủy"].includes(statusFilter);
 
-  const fetchOrders = useCallback(async () => {
+
+   useEffect(() => {
+      // fetchOrders();
+      // const disconnect = connectWebSocket((msg) => {
+      //   handleNewOrder(msg);
+      // });
+  
+      // return () => {
+      //   if (disconnect && typeof disconnect === "function") {
+      //     disconnect();
+      //   }
+      // };
+    }, [statusFilter]);
+
+      // const handleNewOrder = (value) => {
+      //     fetchOrders();
+      //   switch (value) {
+      //     case "You have a new order":
+      //       message.success("🛒 Bạn có đơn hàng mới!");
+      //       break;
+      //     case "Your order has been delivered":
+      //       message.success("🛒 Đã có đơn hàng được giao bạn hãy kiểm tra đi!");
+      //       break;
+      //     case "Your order has been canceled":
+      //       message.success("🛒 Opps có đơn bị hủy!");
+      //       break;
+      //   }
+      
+      // };
+
+  const fetchOrders = async () => {
     try {
-      const status = statusFilter === "Đã Thanh Toán" ? 1
-                   : statusFilter === "Chưa Thanh Toán" ? 0
-                   : statusFilter === "Đang Giao" ? 2
-                   : statusFilter === "Đã Hủy" ? 3
-                   : null;
+      const status =
+        statusFilter === "Đã Thanh Toán"
+          ? 3
+          : statusFilter === "Duyệt Đơn Hàng"
+          ? 1
+          : statusFilter === "Đang Giao"
+          ? 2
+          : statusFilter === "Đã Hủy"
+          ? 4
+          : null;
 
       const data = await getOrderItemsByStatus(status ?? 1);
 
       const mapped = data.map((item, index) => {
-        const order = item.orderDTO || {};
-        const account = order.accountDTO || {};
-        const product = item.productDTO || {};
+        const orders = item.orders || [];
+        const paymentInfo = item.paymentInfo || {};
+        const account = item.orders[0].accountDTO || {};
+        const shipper = [];
+        console.log(`Đơn hàng #${index} - orderDTO:`, data);
 
         return {
-          id: index,
-          customer: account.username || "N/A",
-          address: account.address || "N/A",
-          phone: account.phone || "N/A",
-          product: product.name || "Sản phẩm",
-          quantity: item.quantity,
-          price: item.price,
-          createdAt: order.createdAt?.slice(0, 10),
-          image: product.image ? `${BASE_URL_IMAGE}${product.image}` : "",
-          shipper: order.shipperName || "Không có",
-          shipperPhone: order.shipperPhone || "N/A",
-          shipperEmail: order.shipperEmail || "N/A",
-          shipperStatus: order.shipperStatus || "Chưa nhận đơn",
-          status: convertStatus(order.status),
+          paymentId: item.paymentId,
+          orders,
+          paymentInfo,
+          account,
+          shipper,
         };
       });
 
@@ -52,26 +83,22 @@ function Orders() {
       console.error("Lỗi tải đơn hàng:", err);
       message.error("Không thể tải danh sách đơn hàng!");
     }
-  }, [statusFilter]);
-
-  useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
-
-  const convertStatus = (statusCode) => {
-    switch (Number(statusCode)) {
-      case 0:
-        return "Chưa Thanh Toán";
-      case 1:
-        return "Đã Thanh Toán";
-      case 2:
-        return "Đang Giao";
-      case 3:
-        return "Đã Hủy";
-      default:
-        return "Không xác định";
-    }
   };
+
+  // const convertStatus = (statusCode) => {
+  //   switch (Number(statusCode)) {
+  //     case 1:
+  //       return "Duyệt Đơn Hàng";
+  //     case 3:
+  //       return "Đã Thanh Toán";
+  //     case 2:
+  //       return "Đang Giao";
+  //     case 4:
+  //       return "Đã Hủy";
+  //     default:
+  //       return "Không xác định";
+  //   }
+  // };
 
   const handleSearch = (value) => {
     setSearchText(value);
@@ -98,9 +125,6 @@ function Orders() {
     }
   };
 
-  const formatCurrency = (value) =>
-    new Intl.NumberFormat("vi-VN").format(value * 1000) + " VND";
-
   const columns = [
     {
       title: "Thông Tin Người Mua",
@@ -108,11 +132,11 @@ function Orders() {
       key: "customer",
       render: (_, record) => (
         <div>
-          <strong>{record.customer}</strong>
+          <strong>{record.account.username}</strong>
           <br />
-          {record.address}
+          {record.account.address}
           <br />
-          📞 {record.phone}
+          📞 {record.account.phone}
         </div>
       ),
     },
@@ -121,36 +145,78 @@ function Orders() {
       dataIndex: "product",
       key: "product",
       render: (_, record) => (
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <Image width={50} src={record.image} fallback="https://via.placeholder.com/50" />
-          <div>
-            <strong>{record.product}</strong>
-            <br />
-            Số lượng: {record.quantity}
-            <br />
-            Giá: {formatCurrency(record.price)}
-            <br />
-            Ngày tạo: {record.createdAt}
-          </div>
+        <div
+          className="product-scroll-container"
+          style={{
+            maxHeight: '200px',
+            overflowY: 'auto',
+            padding: '8px',
+          }}
+        >
+          {record.orders.map((item, index) => (
+            <div
+              key={index}
+              style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: '8px' }}
+            >
+              <Image
+                width={50}
+                src={item.productDTO.image ? `${BASE_URL_IMAGE}${item.productDTO.image}` : "https://via.placeholder.com/50"}
+                fallback="https://via.placeholder.com/50"
+              />
+              <div>
+                <strong>{item.productDTO.name}</strong>
+                <br />
+                Số lượng: {item.quantity}
+                <br />
+                Giá: {item.price?.toLocaleString()} đ
+                <br />
+                Ngày tạo: {item.createdAt?.slice(0, 10)}
+              </div>
+            </div>
+          ))}
         </div>
       ),
     },
-    {
-      title: "Thông Tin Shipper",
-      dataIndex: "shipper",
-      key: "shipper",
-      render: (_, record) => (
-        <div>
-          <strong>{record.shipper}</strong>
-          <br />
-          📞 {record.shipperPhone}
-          <br />
-          ✉️ {record.shipperEmail}
-          <br />
-          {getShipperStatusTag(record.shipperStatus)}
-        </div>
-      ),
-    },
+    ...(isPaidOrShipping
+      ? [
+          {
+            title: "Thông Tin Shipper",
+            dataIndex: "shipper",
+            key: "shipper",
+            render: (_, record) => (
+              <div>
+                <strong>{record.shipper}</strong>
+                <br />
+                📞 {record.shipper}
+                <br />
+                ✉️ {record.shipper}
+                <br />
+                {getShipperStatusTag(record.shipperStatus)}
+              </div>
+            ),
+          },
+        ]
+      : [
+          {
+            title: "Xác nhận đơn hàng",
+            dataIndex: "acceptOrder",
+            key: "acceptOrder",
+            render: (_, record) => (
+              <div>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    updateStatusOrder(record.paymentId);
+                    setStatusFilter("Đang Giao");
+                    fetchOrders();
+                  }}
+                >
+                  Xác nhận
+                </Button>
+              </div>
+            ),
+          },
+        ]),
   ];
 
   return (
@@ -172,7 +238,7 @@ function Orders() {
           value={statusFilter}
           allowClear
         >
-          <Option value="Chưa Thanh Toán">Chưa Thanh Toán</Option>
+          <Option value="Duyệt Đơn Hàng">Duyệt Đơn Hàng</Option>
           <Option value="Đã Thanh Toán">Đã Thanh Toán</Option>
           <Option value="Đang Giao">Đang Giao</Option>
           <Option value="Đã Hủy">Đã Hủy</Option>

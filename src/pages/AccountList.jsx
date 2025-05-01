@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Input, Tag, Button, Image, message } from "antd";
+import { Table, Input, Tag, Button, Image, message, Row, Col } from "antd";
 import { LockOutlined, UnlockOutlined } from "@ant-design/icons";
 import "antd/dist/reset.css";
 import { getAllAccounts, searchAccounts } from "../api/ListAccount";
@@ -139,7 +139,9 @@ const AccountList = () => {
             borderColor: record.status === "active" ? "green" : "red",
             color: record.status === "active" ? "green" : "red",
             display: "flex",
-            marginLeft: "35px",
+            justifyContent: "center",
+            alignItems: "center",
+            margin: "0 auto",
             borderRadius: "5px",
           }}
         ></Button>
@@ -149,13 +151,18 @@ const AccountList = () => {
 
   return (
     <div style={{ padding: 20, backgroundColor: "#1e1e2e", color: "white", borderRadius: 10 }}>
-      <h2 style={{ color: "white", fontWeight: "bold" }}>DANH SÁCH TÀI KHOẢN</h2>
-      <Search
-        placeholder="Tìm kiếm..."
-        onChange={handleSearch}
-        value={searchText}
-        style={{ width: 300, marginBottom: 16 }}
-      />
+      <h2 style={{ color: "white", fontWeight: "bold", textAlign: "center" }}>DANH SÁCH TÀI KHOẢN</h2>
+
+      <Row justify="start" style={{ marginBottom: 16 }}>
+        <Col xs={24} sm={12} md={6}>
+          <Search
+            placeholder="Tìm kiếm..."
+            onChange={handleSearch}
+            value={searchText}
+            style={{ width: "100%" }}
+          />
+        </Col>
+      </Row>
 
       {accounts.length === 0 ? (
         <p style={{ color: "white", textAlign: "center" }}>Không có tài khoản nào phù hợp.</p>
@@ -166,6 +173,7 @@ const AccountList = () => {
           rowKey="id"
           pagination={{ pageSize: 4 }}
           bordered
+          scroll={{ x: 768 }}
         />
       )}
     </div>

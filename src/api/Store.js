@@ -1,4 +1,5 @@
 import { requestWithAuth } from "./token";
+
 // Lấy danh sách store (phân trang)
 const getStores = async (page = 0, size = 20) => {
   try {
@@ -21,7 +22,6 @@ const searchStores = async (keyword) => {
   }
 };
 
-
 // Cập nhật thông tin store (form-data)
 const updateStore = async ({ file, name, address, email, phone }) => {
   try {
@@ -32,7 +32,7 @@ const updateStore = async ({ file, name, address, email, phone }) => {
     formData.append("email", email);
     formData.append("phone", phone);
 
-    const response = await requestWithAuth("POST", "/updateStore", formData, {
+    const response = await requestWithAuth("POST", `/updateStore`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -44,4 +44,5 @@ const updateStore = async ({ file, name, address, email, phone }) => {
     throw error;
   }
 };
-export { getStores, searchStores, updateStore};
+
+export { getStores, searchStores, updateStore };

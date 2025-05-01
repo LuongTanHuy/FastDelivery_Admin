@@ -42,7 +42,6 @@ const Food = () => {
       setLoading(true);
       const response = await getProducts();
       setProducts(response);
-      console.log("sp trả về", response);
       const categoryList = [
         ...new Map(
           response.map((item) => [
@@ -62,7 +61,7 @@ const Food = () => {
         ...item,
         idCategory: item.categoryModel?.id,
         category: item.categoryModel?.category || "Không rõ",
-        sale: item.categoryModel?.sale ?? 0, // ✅ chính xác ở đây
+        sale: item.categoryModel?.sale ?? 0, 
         sold: item.totalProductSold ?? 0,
         revenue: item.totalRevenue ?? 0,
       }))
@@ -112,6 +111,7 @@ const Food = () => {
     setImageUrl(URL.createObjectURL(file)); 
   };
   
+  // thêm món ăn
   const handleAddFood = async (values) => {
     try {
       if (!isValidFoodData(values)) {
@@ -134,13 +134,13 @@ const Food = () => {
       await addProduct(payload);
       
   
-      message.success("✅ Thêm món ăn thành công!");
+      message.success("Thêm món ăn thành công!");
       setIsModalVisible(false);
       foodForm.resetFields();
       fetchProducts(); // reload lại danh sách
     } catch (error) {
-      console.error("❌ Lỗi khi thêm món ăn:", error.response?.data || error.message);
-      message.error("❌ Thêm món ăn thất bại!");
+      console.error("Lỗi khi thêm món ăn:", error.response?.data || error.message);
+      message.error("Thêm món ăn thất bại!");
     }
   };
   
@@ -167,14 +167,14 @@ const Food = () => {
 
     await addCategory(values.name, values.discount); // Gửi API thêm danh mục
 
-    message.success("✅ Thêm danh mục thành công!");
+    message.success("Thêm danh mục thành công!");
     categoryForm.resetFields();
     setIsCategoryModalVisible(false);
 
     await fetchCategories(); // Load lại danh mục sau khi thêm
   } catch (error) {
-    console.error("❌ Thêm danh mục thất bại:", error);
-    message.error("❌ Thêm danh mục thất bại!");
+    console.error("Thêm danh mục thất bại:", error);
+    message.error("Thêm danh mục thất bại!");
   } finally {
     setLoading(false);
   }
@@ -211,33 +211,39 @@ const Food = () => {
         return;
       }
   
+      if (!values.category) {
+        message.error("Vui lòng chọn danh mục món ăn!");
+        return;
+      }
+  
       const file = fileList.length > 0 ? fileList[0].originFileObj : null;
   
       console.log("🟡 Dữ liệu gửi đi:", {
         idProduct: editingFood.id,
-        idCategory: values.category,
+        idCategory: Number(values.category),  // 👈 ép kiểu rõ ràng
         name: values.name,
-        price: values.price,
+        price: Number(values.price),
         file,
       });
   
       await updateProduct(
         editingFood.id,
-        values.category,
+        Number(values.category),
         values.name,
-        values.price,
+        Number(values.price),
         file
       );
   
-      message.success("✅ Cập nhật thành công!");
+      message.success("Cập nhật thành công!");
       setIsEditModalVisible(false);
       form.resetFields();
       await fetchProducts();
     } catch (error) {
-      console.error("❌ Lỗi cập nhật sản phẩm:", error);
-      message.error("❌ Cập nhật thất bại!");
+      console.error("Lỗi cập nhật sản phẩm:", error);
+      message.error("Cập nhật thất bại!");
     }
   };
+  
   
   // edit danh muc
   const handleEditCategory = (category) => {
@@ -245,20 +251,20 @@ const Food = () => {
     setEditingCategory(category);
     categoryForm.setFieldsValue({
       name: category.name,
-      discount: category.sale, // dùng 'sale' thay vì 'discount' nếu data là từ backend
+      discount: category.sale, 
     });
     setIsEditCategoryModalVisible(true);
   };
 
-  // chỉnh trạng thái đơn hàng
+  // chỉnh trạng thái sản phẩm
   const handleToggleProductStatus = async (productId) => {
     try {
       await changeProductStatus(productId);
-      message.success("✅ Đã thay đổi trạng thái sản phẩm!");
+      message.success("Đã thay đổi trạng thái sản phẩm!");
       fetchProducts(); // refresh lại danh sách
     } catch (error) {
-      console.error("❌ Lỗi thay đổi trạng thái:", error);
-      message.error("❌ Không thể thay đổi trạng thái sản phẩm!");
+      console.error("Lỗi thay đổi trạng thái:", error);
+      message.error("Không thể thay đổi trạng thái sản phẩm!");
     }
   };
 
@@ -275,9 +281,9 @@ const Food = () => {
           status: item.status,
         }))
       );
-      message.success("✅ Cập nhật trạng thái danh mục thành công!");
+      message.success("Cập nhật trạng thái danh mục thành công!");
     } catch (error) {
-      message.error("❌ Lỗi khi cập nhật trạng thái danh mục");
+      message.error("Lỗi khi cập nhật trạng thái danh mục");
     } finally {
       setLoading(false);
     }

@@ -1,14 +1,5 @@
 import { API } from "../api/configs";
-
-// Lưu tokens vào localStorage
-const saveTokens = (accessToken, refreshToken) => {
-  localStorage.setItem("accessToken", accessToken);
-  localStorage.setItem("refreshToken", refreshToken);
-};
-
-// Lấy tokens từ localStorage
-const getAccessToken = () => localStorage.getItem("accessToken");
-const getRefreshToken = () => localStorage.getItem("refreshToken");
+import { saveTokens,getAccessToken,getRefreshToken ,saveIdStore} from "./token";
 
 // Đăng nhập
 const login = async (email, password) => {
@@ -18,33 +9,15 @@ const login = async (email, password) => {
     });
 
     if (response.data.accessToken) {
-      saveTokens(response.data.accessToken, response.data.refreshToken);
+      await saveTokens(response.data.accessToken, response.data.refreshToken);
     }
-
+  
     return response.data;
   } catch (error) {
     console.error("Lỗi đăng nhập:", error.response?.data || error.message);
     return { error: "Sai tài khoản hoặc mật khẩu hoặc lỗi server" };
   }
 };
-
-
-// const login = async (email, password) => {
-//   try {
-//     const response = await API.post("/auth/checkLogin", null, {
-//       params: { email, password },
-//     });
-
-//     if (response.data.accessToken) {
-//       saveTokens(response.data.accessToken, response.data.refreshToken);
-//     }
-
-//     return response.data;
-//   } catch (error) {
-//     console.error("Lỗi đăng nhập:", error.response?.data || error.message);
-//     return { error: "Sai tài khoản hoặc mật khẩu hoặc lỗi server" };
-//   }
-// };
 
 // Làm mới token
 const refreshAccessToken = async () => {
@@ -69,16 +42,19 @@ const refreshAccessToken = async () => {
 const requestWithAuth = async (method, url, data = null) => {
   try {
     let accessToken = getAccessToken();
+    console.log("Token được gửi đi:", accessToken); // Thêm log để kiểm tra
     const headers = { Authorization: `${accessToken}` };
 
     const response = await API.request({ method, url, data, headers });
     return response.data;
   } catch (error) {
     if (error.response?.status === 401) {
+      console.log("Access token hết hạn, đang làm mới...");
       const newAccessToken = await refreshAccessToken();
       if (newAccessToken) {
         return requestWithAuth(method, url, data);
       } else {
+        console.log("Phiên làm việc hết hạn, đăng xuất...");
         localStorage.clear();
         throw new Error("Phiên làm việc hết hạn. Vui lòng đăng nhập lại.");
       }
@@ -91,6 +67,7 @@ const requestWithAuth = async (method, url, data = null) => {
 // Tự động làm mới token mỗi 15 phút
 const startTokenRefreshInterval = () => {
   setInterval(async () => {
+    console.log("Làm mới access token...");
     await refreshAccessToken();
   }, 15 * 60 * 1000);
 };
@@ -110,11 +87,20 @@ const getUserInfo = async () => {
     if (!response.ok) throw new Error(`Lỗi từ server: ${response.status}`);
 
     const data = await response.json();
+
+    if (data && data.storeDTO && data.storeDTO.id) {
+      saveIdStore(data.storeDTO.id);
+    } else {
+      console.warn("Tài khoản này không có storeDTO.id");
+    }
+
     return data;
   } catch (error) {
     console.error("Lỗi khi lấy thông tin tài khoản:", error);
+    return null; // Trả về null để frontend tự xử lý
   }
 };
+
 
 
 

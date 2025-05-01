@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Input, Upload, Image, message } from "antd";
+import { Table, Button, Modal, Form, Input, Upload, Image, message, Row, Col } from "antd";
 import { UploadOutlined, EditOutlined, DeleteOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { getAllBanners, searchBanners, addBanner, updateBanner, deleteBanner } from "../api/Banner";
 import { BASE_URL_IMAGE } from "../api/configs";
@@ -69,48 +69,59 @@ const BannerManagement = () => {
   const handleAdd = async (values) => {
     try {
       const file = values.image.file.originFileObj;
-      const text = values.adText;
+      const text = values.text;
 
       await addBanner(file, text);
 
-      message.success("🎉 Thêm banner thành công!");
+      message.success("Thêm banner thành công!");
       setIsModalOpen(false);
       form.resetFields();
       fetchBanners();
     } catch (error) {
-      message.error("❌ Không thể thêm banner");
+      message.error("Không thể thêm banner");
     }
   };
 
   const handleEdit = async (values) => {
     try {
-      const text = values.adText;
+      const text = values.text;
       const file = fileList.length > 0 ? fileList[0].originFileObj : null;
 
       await updateBanner(selectedBanner.id, file, text);
 
-      message.success("✅ Cập nhật banner thành công!");
+      message.success("Cập nhật banner thành công!");
       setIsEditModalOpen(false);
       setFileList([]);
       fetchBanners();
     } catch (error) {
-      message.error("❌ Không thể cập nhật banner");
+      message.error("Không thể cập nhật banner");
     }
   };
 
   return (
     <div style={{ padding: 20, backgroundColor: "#1e1e2e", color: "white", borderRadius: 10 }}>
-      <h2>BANNER</h2>
-      <Input
-        placeholder="Tìm kiếm banner..."
-        onChange={handleSearch}
-        value={searchText}
-        style={{ marginBottom: 20, width: 300 }}
-        suffix={<SearchOutlined />}
-      />
-      <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)} style={{ float: "right", marginBottom: 20 }}>
-        Thêm
-      </Button>
+      <h2 style={{ color: "white", fontWeight: "bold" }}>BANNER</h2>
+
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Col xs={24} sm={12} md={6}>
+          <Input
+            placeholder="Tìm kiếm banner..."
+            onChange={handleSearch}
+            value={searchText}
+            suffix={<SearchOutlined />}
+            style={{ width: "100%" }}
+          />
+        </Col>
+        <Col xs={24} sm={12} md={4} style={{ textAlign: "right", marginTop: 8 }}>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setIsModalOpen(true)}
+          >
+            Thêm
+          </Button>
+        </Col>
+      </Row>
 
       <Table
         columns={[
@@ -129,14 +140,13 @@ const BannerManagement = () => {
             title: "Tùy chỉnh",
             key: "actions",
             render: (_, record) => (
-              <>
+              <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
                 <Button
                   icon={<EditOutlined />}
                   onClick={() => {
                     setSelectedBanner(record);
                     setIsEditModalOpen(true);
                   }}
-                  style={{ marginRight: 8 }}
                 />
                 <Button
                   icon={<DeleteOutlined />}
@@ -144,14 +154,14 @@ const BannerManagement = () => {
                   onClick={async () => {
                     try {
                       await deleteBanner(record.id);
-                      message.success("🗑️ Đã xoá banner!");
+                      message.success("Đã xoá banner!");
                       fetchBanners();
                     } catch (error) {
-                      message.error("❌ Xoá banner thất bại!");
+                      message.error("Xoá banner thất bại!");
                     }
                   }}
                 />
-              </>
+              </div>
             ),
           },
         ]}
@@ -159,9 +169,9 @@ const BannerManagement = () => {
         rowKey="id"
         pagination={{ pageSize: 4 }}
         bordered
+        scroll={{ x: 768 }}
       />
 
-      {/* Modal Thêm Mới */}
       <Modal
         title="Thêm Banner"
         open={isModalOpen}
@@ -183,13 +193,12 @@ const BannerManagement = () => {
               <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
             </Upload>
           </Form.Item>
-          <Form.Item label="Nội dung quảng cáo" name="adText" rules={[{ required: true, message: "Nhập nội dung!" }, { max: 255, message: "Tối đa 255 ký tự!" }]}>
+          <Form.Item label="Nội dung quảng cáo" name="text" rules={[{ required: true, message: "Nhập nội dung!" }, { max: 255, message: "Tối đa 255 ký tự!" }]}>
             <Input.TextArea />
           </Form.Item>
         </Form>
       </Modal>
 
-      {/* Modal Chỉnh Sửa */}
       <Modal
         title="Chỉnh Sửa Banner"
         open={isEditModalOpen}
